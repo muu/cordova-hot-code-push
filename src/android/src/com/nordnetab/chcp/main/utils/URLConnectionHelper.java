@@ -5,13 +5,18 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.Map;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
 /**
  * Created by Nikolay Demyankov on 03.06.16.
  * <p/>
  * Helper class to work with URLConnection
  */
 public class URLConnectionHelper {
-
+    private static final boolean IGNORE_SSL_CERTS = false;
     // connection timeout in milliseconds
     private static final int CONNECTION_TIMEOUT = 30000;
 
@@ -27,6 +32,28 @@ public class URLConnectionHelper {
      * @throws IOException when url is invalid or failed to establish connection
      */
     public static URLConnection createConnectionToURL(final String url, final Map<String, String> requestHeaders) throws IOException {
+        if (IGNORE_SSL_CERTS){
+            TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+                    public void checkClientTrusted(
+                        java.security.cert.X509Certificate[] certs, String authType) {
+                    }
+                    public void checkServerTrusted(
+                        java.security.cert.X509Certificate[] certs, String authType) {
+                    }
+                }
+            };
+            try {
+                SSLContext sc = SSLContext.getInstance("SSL");
+                sc.init(null, trustAllCerts, new java.security.SecureRandom());
+                HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+            } catch (Exception e) {
+            }
+        }
+
         final URL connectionURL = URLUtility.stringToUrl(url);
         if (connectionURL == null) {
             throw new IOException("Invalid url format: " + url);
