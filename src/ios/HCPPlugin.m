@@ -9,6 +9,7 @@
 #import "HCPPlugin.h"
 #import "HCPFileDownloader.h"
 #import "HCPFilesStructure.h"
+#import "HCPUpdateLoader.h"
 #import "HCPEvents.h"
 #import "HCPPluginInternalPreferences+UserDefaults.h"
 #import "HCPUpdateInstaller.h"
@@ -30,7 +31,6 @@
     HCPPluginInternalPreferences *_pluginInternalPrefs;
     NSString *_installationCallback;
     NSString *_downloadCallback;
-    NSString *_progressCallback;
     HCPXmlConfig *_pluginXmlConfig;
     HCPApplicationConfig *_appConfig;
     HCPAppUpdateRequestAlertDialog *_appUpdateRequestDialog;
@@ -166,10 +166,6 @@ static NSString *const DEFAULT_STARTING_PAGE = @"index.html";
     if (!_isPluginReadyForWork) {
         return NO;
     }
-    if (callbackId) {
-        _downloadCallback = callbackId;
-        _progressCallback = callbackId;
-    }
     
     if (!options && self.defaultFetchUpdateOptions) {
         options = self.defaultFetchUpdateOptions;
@@ -182,8 +178,8 @@ static NSString *const DEFAULT_STARTING_PAGE = @"index.html";
     request.currentNativeVersion = _pluginXmlConfig.nativeInterfaceVersion;
     
     NSError *error = nil;
-    [HCPUpdateLoader sharedInstance].delegate = self;
     [[HCPUpdateLoader sharedInstance] executeDownloadRequest:request error:&error];
+    
     if (error) {
         if (callbackId) {
             CDVPluginResult *errorResult = [CDVPluginResult pluginResultWithActionName:kHCPUpdateDownloadErrorEvent
@@ -194,19 +190,12 @@ static NSString *const DEFAULT_STARTING_PAGE = @"index.html";
         
         return NO;
     }
-    return YES;
-}
-
-# pragma mark 进度回调
-- (void)callBackProgress:(NSDictionary *)dic {
-    NSLog(@"HCPPlugin --------- %@", [dic objectForKey:@"progress"]);
     
-    dispatch_async(dispatch_get_main_queue(), ^{
-        CDVPluginResult *successResult = [CDVPluginResult pluginResultWithActionName:KHCPUpdateDownLoadSuccessEvent
-                                                                                data:dic error:nil];
-        [successResult setKeepCallbackAsBool:YES];
-        [self.commandDelegate sendPluginResult:successResult callbackId:_progressCallback];
-    });
+    if (callbackId) {
+        _downloadCallback = callbackId;
+    }
+    
+    return YES;
 }
 
 /**

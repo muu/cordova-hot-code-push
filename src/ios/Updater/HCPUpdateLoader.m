@@ -5,6 +5,7 @@
 //
 
 #import "HCPUpdateLoader.h"
+#import "HCPUpdateLoaderWorker.h"
 #import "HCPUpdateInstaller.h"
 #import "NSError+HCPExtension.h"
 
@@ -45,17 +46,11 @@
                             description:@"Installation is in progress, can't launch the download task. Please, wait for it to finish."];
         return NO;
     }
-    HCPUpdateLoaderWorker *updateLoaderWorker = [[HCPUpdateLoaderWorker alloc] initWithRequest:request];
-    updateLoaderWorker.delegate = self;
-    id<HCPWorker> task = updateLoaderWorker;
+    
+    id<HCPWorker> task = [[HCPUpdateLoaderWorker alloc] initWithRequest:request];
     [self executeTask:task];
+    
     return YES;
-}
-
--(void)callBackProgress:(NSDictionary *)dic {
-    if ([_delegate respondsToSelector:@selector(callBackProgress:)]) {
-        [_delegate callBackProgress:dic];
-    }
 }
 
 #pragma mark Private API

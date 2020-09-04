@@ -151,7 +151,7 @@
                                                                    srcDirURL:newAppConfig.contentConfig.contentURL
                                                                    dstDirURL:_pluginFiles.downloadFolder
                                                               requestHeaders:_requestHeaders];
-    [downloader startDownloadWithCompletionBlock:^(NSError * error, NSDictionary *dic) {
+    [downloader startDownloadWithCompletionBlock:^(NSError * error) {
         if (error) {
             // remove new release folder
             [[NSFileManager defaultManager] removeItemAtURL:_pluginFiles.contentFolder error:nil];
@@ -162,20 +162,13 @@
                           applicationConfig:newAppConfig];
             return;
         }
-        if (dic) {
-            if ([_delegate respondsToSelector:@selector(callBackProgress:)]) {
-                [_delegate callBackProgress:dic];
-            }
-        }
                   
         // store configs
         [_manifestStorage store:newManifest inFolder:_pluginFiles.downloadFolder];
         [_appConfigStorage store:newAppConfig inFolder:_pluginFiles.downloadFolder];
                   
         // notify that we are done
-        if (dic && [[dic objectForKey:@"progress"] isEqualToString:@"1.00"]) {
-            [self notifyUpdateDownloadSuccess:newAppConfig];
-        }
+        [self notifyUpdateDownloadSuccess:newAppConfig];
     }];
 }
 

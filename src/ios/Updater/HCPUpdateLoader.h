@@ -6,11 +6,7 @@
 
 #import <Foundation/Foundation.h>
 #import "HCPUpdateRequest.h"
-#import "HCPUpdateLoaderWorker.h"
 
-@protocol HCPUpdateLoaderDelegate
-- (void)callBackProgress:(NSDictionary *)dic;
-@end
 /**
  *  Utility class to perform update download.
  *  It only schedules the download and executes it as soon as possible.
@@ -22,9 +18,7 @@
  *
  *  @see HCPUpdateLoaderWorker
  */
-@interface HCPUpdateLoader : NSObject<HCPUpdateLoaderWorkerDelegate>
-
-@property (weak, nonatomic) id delegate;
+@interface HCPUpdateLoader : NSObject
 
 /**
  *  Get shared instance of the object.

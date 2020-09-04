@@ -16,7 +16,6 @@ import com.nordnetab.chcp.main.model.ManifestFile;
 import com.nordnetab.chcp.main.model.PluginFilesStructure;
 import com.nordnetab.chcp.main.network.ApplicationConfigDownloader;
 import com.nordnetab.chcp.main.network.ContentManifestDownloader;
-import com.nordnetab.chcp.main.network.DownloadProgressListener;
 import com.nordnetab.chcp.main.network.DownloadResult;
 import com.nordnetab.chcp.main.network.FileDownloader;
 import com.nordnetab.chcp.main.storage.ApplicationConfigStorage;
@@ -51,10 +50,6 @@ class UpdateLoaderWorker implements WorkerTask {
 
     private WorkerEvent resultEvent;
 
-    private FileDownloader fileDownloader;
-
-    private DownloadProgressListener downloadProgressListener;
-
     /**
      * Constructor.
      *
@@ -65,23 +60,6 @@ class UpdateLoaderWorker implements WorkerTask {
         appNativeVersion = request.getCurrentNativeVersion();
         filesStructure = request.getCurrentReleaseFileStructure();
         requestHeaders = request.getRequestHeaders();
-        fileDownloader = new FileDownloader();
-        initListener();
-    }
-
-    private void initListener() {
-        fileDownloader.setDownloadProgressListener(new DownloadProgressListener() {
-            @Override
-            public void onDownloadProgress(float progress, int currentNum, int totalNum) {
-                if (null != downloadProgressListener) {
-                    downloadProgressListener.onDownloadProgress(progress, currentNum, totalNum);
-                }
-            }
-        });
-    }
-
-    public void setDownloadProgressListener(DownloadProgressListener downloadProgressListener) {
-        this.downloadProgressListener = downloadProgressListener;
     }
 
     @Override
@@ -91,6 +69,7 @@ class UpdateLoaderWorker implements WorkerTask {
         if (!init()) {
             return;
         }
+
         // download new application config
         final ApplicationConfig newAppConfig = downloadApplicationConfig(applicationConfigUrl);
         if (newAppConfig == null) {
@@ -130,6 +109,7 @@ class UpdateLoaderWorker implements WorkerTask {
             manifestStorage.storeInFolder(newContentManifest, filesStructure.getWwwFolder());
             appConfigStorage.storeInFolder(newAppConfig, filesStructure.getWwwFolder());
             setNothingToUpdateResult(newAppConfig);
+
             return;
         }
 
@@ -237,11 +217,9 @@ class UpdateLoaderWorker implements WorkerTask {
      */
     private boolean downloadNewAndChangedFiles(final String contentUrl, final ManifestDiff diff) {
         final List<ManifestFile> downloadFiles = diff.getUpdateFiles();
-        // 需要更新的文件数量
-
         boolean isFinishedWithSuccess = true;
         try {
-            fileDownloader.downloadFiles(filesStructure.getDownloadFolder(), contentUrl, downloadFiles, requestHeaders);
+            FileDownloader.downloadFiles(filesStructure.getDownloadFolder(), contentUrl, downloadFiles, requestHeaders);
         } catch (Exception e) {
             e.printStackTrace();
             isFinishedWithSuccess = false;
